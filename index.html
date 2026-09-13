@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>Locale</title>
+<meta name="theme-color" content="#1B4B43">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Locale">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231B4B43'/%3E%3Ctext x='29' y='69' font-family='Georgia,serif' font-size='56' font-weight='700' font-style='italic' fill='%23E2992F'%3EL%3C/text%3E%3Ccircle cx='73' cy='28' r='7.5' fill='%23BF5B2E'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231B4B43'/%3E%3Ctext x='29' y='69' font-family='Georgia,serif' font-size='56' font-weight='700' font-style='italic' fill='%23E2992F'%3EL%3C/text%3E%3Ccircle cx='73' cy='28' r='7.5' fill='%23BF5B2E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --teal-deep:#1B4B43;
+    --teal-tint:#DCE9E6;
+    --cream:#F2ECDD;
+    --mustard:#E2992F;
+    --mustard-tint:#FBEBD3;
+    --clay:#BF5B2E;
+    --clay-tint:#F6DDCF;
+    --sage:#7C9885;
+    --sage-tint:#E4EBE1;
+    --ink:#22302B;
+    --ink-soft:#5B6B62;
+    --paper:#FBF8F0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:linear-gradient(180deg,#0F2E28,#1B4B43 40%,#274F45);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+    font-family:'Manrope',sans-serif;
+    color:var(--ink);
+  }
+  .intro{
+    max-width:380px;
+    color:var(--paper);
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .intro h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:28px;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .intro p{
+    font-size:14px;
+    line-height:1.5;
+    margin:0;
+    color:#CFE0DA;
+  }
+  .wrap{display:flex;flex-direction:column;align-items:center;}
+
+  /* ---- phone frame ---- */
+  .phone{
+    width:380px;
+    max-width:92vw;
+    height:760px;
+    max-height:82vh;
+    background:var(--paper);
+    border-radius:38px;
+    border:8px solid #0E241F;
+    box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.03);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute;
+    top:8px;left:50%;
+    transform:translateX(-50%);
+    width:120px;height:22px;
+    background:#0E241F;
+    border-radius:0 0 16px 16px;
+    z-index:5;
+  }
+  .appbar{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 18px;
+    background:var(--teal-deep);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    position:relative;
+    z-index:4;
+    flex-shrink:0;
+  }
+  .appbar-mark{
+    width:26px;height:26px;border-radius:8px;
+    background:var(--mustard);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .appbar-mark svg{width:14px;height:14px;}
+  .appbar-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:18px;
+    color:var(--paper);
+    letter-spacing:-0.01em;
+  }
+  .appbar-screen{
+    margin-left:auto;
+    font-size:11.5px;
+    font-weight:700;
+    color:#CFE0DA;
+  }
+  .screen{
+    flex:1;
+    overflow-y:auto;
+    padding:18px 20px 18px;
+    display:none;
+  }
+  .screen.active{display:block;}
+  #screen-map.screen.active{display:flex;}
+
+  /* ---- shared bits ---- */
+  .eyebrow-free-title{
+    font-family:'Fraunces',serif;
+    font-size:24px;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--teal-deep);
+  }
+  .subtitle{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0 0 20px;
+    line-height:1.5;
+  }
+  .compass{position:absolute;top:44px;right:20px;opacity:.5;}
+
+  /* stepper row */
+  .field-label{font-size:13px;font-weight:600;color:var(--ink);margin:18px 0 8px;}
+  .stepper{
+    display:flex;align-items:center;gap:14px;
+    background:var(--sage-tint);
+    border-radius:14px;
+    padding:10px 16px;
+    width:fit-content;
+  }
+  .stepper button{
+    width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--sage);
+    background:var(--paper);
+    font-size:16px;font-weight:700;color:var(--teal-deep);
+    cursor:pointer;
+  }
+  .stepper span{font-weight:700;font-size:16px;min-width:20px;text-align:center;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid var(--sage);
+    background:var(--paper);
+    font-size:13px;font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    user-select:none;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .chip.selected{
+    background:var(--teal-deep);
+    border-color:var(--teal-deep);
+    color:var(--paper);
+  }
+
+  .pace-row{display:flex;gap:10px;}
+  .pace-card{
+    flex:1;
+    border:1px solid var(--sage);
+    border-radius:14px;
+    padding:12px;
+    cursor:pointer;
+    background:var(--paper);
+  }
+  .pace-card.selected{border-color:var(--mustard);background:var(--mustard-tint);}
+  .pace-card b{display:block;font-size:14px;margin-bottom:2px;}
+  .pace-card span{font-size:12px;color:var(--ink-soft);}
+
+  .cta{
+    margin-top:26px;
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:999px;
+    background:var(--mustard);
+    color:#2A1B04;
+    font-weight:700;
+    font-size:15px;
+    font-family:'Manrope',sans-serif;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(226,153,47,.35);
+  }
+  .cta:active{transform:translateY(1px);}
+  .cta{position:relative;}
+  .cta.loading{color:transparent;pointer-events:none;}
+  .cta.loading::after{
+    content:"";
+    position:absolute;
+    top:50%;left:50%;
+    width:18px;height:18px;
+    margin:-9px 0 0 -9px;
+    border:2.5px solid rgba(42,27,4,.3);
+    border-top-color:#2A1B04;
+    border-radius:50%;
+    animation:cta-spin .7s linear infinite;
+  }
+  @keyframes cta-spin{to{transform:rotate(360deg);}}
+
+  .tip-counter{
+    margin-top:18px;
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;align-items:center;gap:6px;
+  }
+  .tip-counter b{color:var(--teal-deep);}
+
+  /* ---- itinerary screen ---- */
+  .day-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .day-tab{
+    padding:7px 14px;border-radius:999px;
+    border:1px solid var(--teal-deep);
+    background:var(--paper);color:var(--teal-deep);
+    font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .day-tab.active{background:var(--teal-deep);color:var(--paper);}
+
+  .route{position:relative;padding-left:26px;}
+  .route::before{
+    content:"";
+    position:absolute;left:9px;top:6px;bottom:6px;
+    border-left:2px dashed var(--sage);
+  }
+  .stop{position:relative;margin-bottom:16px;}
+  .stop::before{
+    content:"";
+    position:absolute;left:-26px;top:6px;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--mustard);
+    border:2px solid var(--paper);
+    box-shadow:0 0 0 1px var(--sage);
+  }
+  .stop-card{
+    background:var(--paper);
+    border:1px solid #E4DDC9;
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .stop-time{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
+  .stop-name{font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:0 0 4px;color:var(--ink);}
+  .stop-tip{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:0 0 8px;}
+  .stop-card{cursor:pointer;}
+  .stop-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .chevron{width:16px;height:16px;color:var(--ink-soft);flex-shrink:0;margin-top:5px;transition:transform .2s ease;}
+  .stop-card.expanded .chevron{transform:rotate(180deg);}
+  .stop-more{max-height:0;overflow:hidden;transition:max-height .25s ease, margin-top .25s ease;}
+  .stop-card.expanded .stop-more{max-height:160px;margin-top:10px;padding-top:10px;border-top:1px solid #EFE9D8;}
+  .stop-more-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);padding:3px 0;}
+  .stop-more-row b{color:var(--teal-deep);}
+  .upvote-btn{
+    margin-left:auto;
+    border:none;background:none;
+    font-size:11px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:4px;
+    cursor:pointer;
+    padding:3px 6px;
+    border-radius:8px;
+    font-family:'Manrope',sans-serif;
+    transition:color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .upvote-btn:active{transform:scale(0.94);}
+  .upvote-btn.voted{color:var(--clay);font-weight:700;background:var(--clay-tint);}
+  .tag-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tag{
+    font-size:11px;font-weight:700;
+    padding:3px 9px;border-radius:999px;
+  }
+  .tag.heritage{background:var(--mustard-tint);color:#8A5A0F;border:1px solid var(--mustard);}
+  .tag.food{background:var(--clay-tint);color:#8A3D18;border:1px solid var(--clay);}
+  .tag.nature{background:var(--sage-tint);color:#3F5C46;border:1px solid var(--sage);}
+  .tag.nightlife{background:var(--teal-tint);color:var(--teal-deep);border:1px solid var(--teal-deep);}
+  .tag.shopping{background:var(--clay-tint);color:#8A3D18;border:1px solid var(--clay);}
+  .tag.hidden{background:var(--sage-tint);color:#3F5C46;border:1px dashed var(--sage);}
+  .meta{font-size:11px;color:var(--ink-soft);}
+
+  .empty-state{
+    text-align:center;padding:60px 10px;color:var(--ink-soft);
+  }
+  .empty-state b{display:block;color:var(--teal-deep);font-family:'Fraunces',serif;font-size:17px;margin-bottom:6px;}
+
+  /* ---- map screen ---- */
+  #screen-map{padding:18px 0 0;display:none;}
+  #screen-map.active{display:flex;flex-direction:column;}
+  .map-head{padding:0 20px;}
+  #mapView{
+    width:100%;
+    height:280px;
+    background:var(--sage-tint);
+  }
+  .route-summary{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 20px;
+    border-bottom:1px solid #E4DDC9;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .route-summary b{color:var(--teal-deep);}
+  .stop-order-list{padding:14px 20px 20px;overflow-y:auto;flex:1;}
+  .stop-order-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 6px;
+    margin:0 -6px;
+    border-bottom:1px solid #EFE9D8;
+    border-radius:10px;
+    font-size:13px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .stop-order-item:active{background:var(--sage-tint);}
+  .stop-order-item.active{background:var(--mustard-tint);}
+  .stop-order-num{
+    width:22px;height:22px;border-radius:50%;
+    background:var(--teal-deep);color:var(--paper);
+    font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .directions-btn{
+    margin:0 20px 16px;
+    padding:13px;
+    border:none;border-radius:999px;
+    background:var(--teal-deep);
+    color:var(--paper);
+    font-weight:700;font-size:14px;
+    font-family:'Manrope',sans-serif;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+
+  /* ---- add tip screen ---- */
+  .input, textarea, select{
+    width:100%;
+    border:1px solid var(--sage);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:'Manrope',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    background:var(--paper);
+    margin-bottom:14px;
+  }
+  textarea{resize:none;height:70px;}
+  .cat-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+
+  .toast{
+    position:absolute;
+    bottom:86px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--teal-deep);
+    color:var(--paper);
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:13px;font-weight:600;
+    opacity:0;
+    transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:10;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---- tab bar ---- */
+  .tabbar{
+    display:flex;
+    border-top:1px solid #E4DDC9;
+    background:var(--paper);
+  }
+  .tabbtn{
+    flex:1;
+    border:none;background:none;
+    padding:12px 4px 16px;
+    font-family:'Manrope',sans-serif;
+    font-size:11.5px;font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .tabbtn.active{color:var(--teal-deep);}
+  .tabbtn svg{width:20px;height:20px;}
+
+  /* ---- real phone = full-screen app, no mockup chrome ---- */
+  @media (max-width:600px){
+    body{
+      padding:0;
+      background:var(--paper);
+      align-items:stretch;
+      justify-content:stretch;
+      display:block;
+    }
+    .intro{display:none;}
+    .wrap{display:block;}
+    .phone{
+      width:100%;
+      max-width:100%;
+      height:100vh;      /* fallback for older browsers */
+      height:100svh;     /* small viewport = visible area with browser chrome shown */
+      height:100dvh;     /* dynamic viewport = tracks chrome showing/hiding */
+      max-height:100vh;
+      max-height:100dvh;
+      border:none;
+      border-radius:0;
+      box-shadow:none;
+    }
+    .notch{display:none;}
+    #screen-map{padding-top:18px;}
+  }
+
+  @media (display-mode: standalone){
+    .appbar{padding-top:calc(14px + env(safe-area-inset-top));}
+    .tabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom));}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Locale</h1>
+    <p>Plans your days around what locals actually love — not what ranks highest on a map.</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+
+    <div class="appbar">
+      <div class="appbar-mark">
+        <svg viewBox="0 0 34 34" fill="none">
+          <text x="10.5" y="25.5" font-family="Fraunces, Georgia, serif" font-size="23" font-weight="700" font-style="italic" fill="#1B4B43">L</text>
+          <circle cx="25" cy="9" r="2.6" fill="#BF5B2E"/>
+        </svg>
+      </div>
+      <div class="appbar-title">Locale</div>
+      <div class="appbar-screen" id="appbarScreen">Plan</div>
+    </div>
+
+    <!-- SCREEN 1: PLAN -->
+    <div class="screen active" id="screen-plan">
+      <h2 class="eyebrow-free-title">Where to, and for how long?</h2>
+      <p class="subtitle">Kochi, India — built from tips shared by people who live here.</p>
+
+      <div class="field-label">Days in the city</div>
+      <div class="stepper">
+        <button onclick="changeDays(-1)">−</button>
+        <span id="dayCount">2</span>
+        <button onclick="changeDays(1)">+</button>
+      </div>
+
+      <div class="field-label">What are you into?</div>
+      <div class="chips" id="interestChips"></div>
+
+      <div class="field-label">Pace</div>
+      <div class="pace-row">
+        <div class="pace-card selected" data-pace="relaxed" onclick="setPace('relaxed')">
+          <b>Relaxed</b><span>3 stops a day</span>
+        </div>
+        <div class="pace-card" data-pace="packed" onclick="setPace('packed')">
+          <b>Packed</b><span>5 stops a day</span>
+        </div>
+      </div>
+
+      <button class="cta" id="generateBtn" onclick="generateItinerary()">Build my days</button>
+      <div class="tip-counter">🗺️ <b id="tipCount">14</b> local tips loaded for Kochi</div>
+    </div>
+
+    <!-- SCREEN 2: ITINERARY -->
+    <div class="screen" id="screen-itinerary">
+      <h2 class="eyebrow-free-title">Your Kochi days</h2>
+      <p class="subtitle" id="itinerarySub">Set your preferences on the Plan tab to generate this.</p>
+      <div class="day-tabs" id="dayTabs"></div>
+      <div class="route" id="routeList"></div>
+      <button class="directions-btn" style="margin:6px 0 0" onclick="showScreen('map')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="2.5"/><path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z"/></svg>
+        See today's route on the map
+      </button>
+    </div>
+
+    <!-- SCREEN 3: MAP -->
+    <div class="screen" id="screen-map">
+      <div class="map-head">
+        <h2 class="eyebrow-free-title">Today's route</h2>
+        <p class="subtitle" id="mapSub">Generate a plan first to see the route.</p>
+      </div>
+      <div id="mapView"></div>
+      <div class="route-summary" id="routeSummary"></div>
+      <div class="stop-order-list" id="stopOrderList"></div>
+      <button class="directions-btn" id="directionsBtn" onclick="openGoogleMaps()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-7-7 18-2-8-8-3z"/></svg>
+        Open turn-by-turn in Google Maps
+      </button>
+    </div>
+
+    <!-- SCREEN 4: ADD TIP -->
+    <div class="screen" id="screen-add">
+      <h2 class="eyebrow-free-title">Share a local tip</h2>
+      <p class="subtitle">Add a place only someone who lives here would know to send a traveler to.</p>
+
+      <div class="field-label">Place name</div>
+      <input class="input" id="addName" placeholder="e.g. Kumbalangi backwater canoe route">
+
+      <div class="field-label">Category</div>
+      <div class="cat-grid" id="addCategoryChips"></div>
+
+      <div class="field-label">Your tip</div>
+      <textarea id="addTip" placeholder="Why should a traveler go here, and when?"></textarea>
+
+      <div class="field-label">Cost &amp; time needed</div>
+      <input class="input" id="addCost" placeholder="e.g. Free · 30 min">
+
+      <button class="cta" onclick="submitTip()">Add to Locale</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <nav class="tabbar">
+      <button class="tabbtn active" data-target="plan" onclick="showScreen('plan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l8-6 8 6v12h-5v-7H9v7H4z"/></svg>
+        Plan
+      </button>
+      <button class="tabbtn" data-target="itinerary" onclick="showScreen('itinerary')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l-6 3V6l6-3 6 3 6-3v15l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg>
+        Itinerary
+      </button>
+      <button class="tabbtn" data-target="map" onclick="showScreen('map')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="2.5"/><path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z"/></svg>
+        Map
+      </button>
+      <button class="tabbtn" data-target="add" onclick="showScreen('add')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        Add a tip
+      </button>
+    </nav>
+  </div>
+</div>
+
+<script>
+const CATS = [
+  {id:'heritage', label:'Heritage'},
+  {id:'food', label:'Food'},
+  {id:'nature', label:'Nature'},
+  {id:'nightlife', label:'Nightlife'},
+  {id:'shopping', label:'Shopping'},
+  {id:'hidden', label:'Hidden gem'},
+];
+
+let places = [
+  {name:'Chinese Fishing Nets, Fort Kochi', cat:'heritage', tip:'Walk past the main tourist net further down the shore — quieter, and the fishermen there will let you help pull the rope.', cost:'Free (tip the crew)', time:40, votes:38, best:'Evening', lat:9.9658, lng:76.2421},
+  {name:'Mattancherry Palace', cat:'heritage', tip:'Closed on Fridays — check before you go. The mural rooms are quiet right at opening, before 11.', cost:'₹5', time:60, votes:29, best:'Morning', lat:9.9581, lng:76.2603},
+  {name:'Jew Town spice lanes', cat:'hidden', tip:'Skip the antique shops on the main road and duck into the alley behind the synagogue — old spice warehouses still open to visitors.', cost:'Free', time:45, votes:24, best:'Morning', lat:9.9578, lng:76.2601},
+  {name:'Kashi Art Cafe', cat:'food', tip:'Go before 10am — the garden seating fills up fast and it is the whole point of the place.', cost:'₹400', time:45, votes:31, best:'Morning', lat:9.9646, lng:76.2422},
+  {name:'Fort Kochi beach walk', cat:'nature', tip:'Fishermen sell the fresh catch right off the boats near the nets in the evening — cheaper and fresher than any restaurant.', cost:'Free', time:40, votes:22, best:'Evening', lat:9.9656, lng:76.2400},
+  {name:'Marine Drive promenade', cat:'nature', tip:'Locals come for the evening walk, not the daytime heat — best right after 5pm with the harbor lights coming on.', cost:'Free', time:50, votes:19, best:'Evening', lat:9.9816, lng:76.2789},
+  {name:'Vypin ferry crossing', cat:'hidden', tip:'The public ferry costs next to nothing and gives a better harbor sunset view than any paid boat tour.', cost:'₹5', time:30, votes:17, best:'Evening', lat:9.9668, lng:76.2427},
+  {name:'Cherai Beach', cat:'nature', tip:'Go on a weekday morning — far less crowded, and there is a chance of spotting dolphins offshore.', cost:'Free', time:120, votes:26, best:'Morning', lat:10.1418, lng:76.1802},
+  {name:'Kerala Kathakali Centre', cat:'nightlife', tip:'Arrive an hour early for the makeup session — watching the transformation is more memorable than the performance itself.', cost:'₹350', time:120, votes:21, best:'Evening', lat:9.9635, lng:76.2438},
+  {name:'Broadway Market', cat:'shopping', tip:'Go on a weekday morning when it is stocking up, not the evening tourist rush. Bargain hard on spices and textiles.', cost:'Varies', time:60, votes:16, best:'Morning', lat:9.9750, lng:76.2790},
+  {name:'Fort House seafood shack', cat:'food', tip:'Skip the menu — ask what came in that morning and order the karimeen pollichathu if it is available.', cost:'₹600', time:75, votes:28, best:'Evening', lat:9.9650, lng:76.2410},
+  {name:'David Hall art space', cat:'hidden', tip:'Free exhibitions most weeks, and the courtyard café behind it is a quiet break from the fort-area crowds.', cost:'Free', time:40, votes:13, best:'Afternoon', lat:9.9648, lng:76.2417},
+  {name:'Hill Palace Museum', cat:'heritage', tip:'The largest palace museum in Kerala — quiet on weekdays, and the guided tour is worth the extra time.', cost:'₹20', time:90, votes:14, best:'Afternoon', lat:9.9204, lng:76.3486},
+  {name:'Kumbalangi backwater canoe ride', cat:'hidden', tip:'Book through the village co-op, not a hotel package — cheaper, and the guides are the actual fishing families.', cost:'₹500', time:100, votes:23, best:'Morning', lat:9.8945, lng:76.3346},
+];
+
+let selectedInterests = new Set();
+let pace = 'relaxed';
+let days = 2;
+let selectedAddCat = 'heritage';
+let currentDayView = 1;
+let generatedDays = [];
+
+function renderChips(){
+  const wrap = document.getElementById('interestChips');
+  wrap.innerHTML = '';
+  CATS.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'chip' + (selectedInterests.has(c.id) ? ' selected' : '');
+    el.textContent = c.label;
+    el.onclick = ()=>{
+      selectedInterests.has(c.id) ? selectedInterests.delete(c.id) : selectedInterests.add(c.id);
+      renderChips();
+    };
+    wrap.appendChild(el);
+  });
+
+  const addWrap = document.getElementById('addCategoryChips');
+  addWrap.innerHTML = '';
+  CATS.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'chip' + (selectedAddCat===c.id ? ' selected' : '');
+    el.textContent = c.label;
+    el.onclick = ()=>{ selectedAddCat = c.id; renderChips(); };
+    addWrap.appendChild(el);
+  });
+}
+renderChips();
+
+function changeDays(delta){
+  days = Math.max(1, Math.min(5, days+delta));
+  document.getElementById('dayCount').textContent = days;
+}
+
+function setPace(p){
+  pace = p;
+  document.querySelectorAll('.pace-card').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.pace===p);
+  });
+}
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.target===name));
+  const labels = {plan:'Plan', itinerary:'Itinerary', map:'Map', add:'Add a tip'};
+  document.getElementById('appbarScreen').textContent = labels[name] || '';
+  if(name==='map'){
+    setTimeout(()=>{ renderMap(); }, 60);
+  }
+}
+
+function generateItinerary(){
+  const btn = document.getElementById('generateBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // simulate a real build step so the loading state is visible and honest
+  setTimeout(()=>{
+    let pool = selectedInterests.size
+      ? places.filter(p=>selectedInterests.has(p.cat))
+      : places.slice();
+
+    pool.sort((a,b)=>b.votes-a.votes);
+
+    const perDay = pace==='relaxed' ? 3 : 5;
+    const needed = days*perDay;
+    if(pool.length < needed){
+      const extras = places.filter(p=>!pool.includes(p)).sort((a,b)=>b.votes-a.votes);
+      pool = pool.concat(extras);
+    }
+
+    generatedDays = [];
+    let idx = 0;
+    for(let d=1; d<=days; d++){
+      const stops = [];
+      let clock = 9*60;
+      for(let s=0; s<perDay && idx<pool.length; s++, idx++){
+        const p = pool[idx];
+        const h = Math.floor(clock/60), m = clock%60;
+        const ampm = h>=12 ? 'PM':'AM';
+        const hh = ((h+11)%12)+1;
+        // keep the original duration (minutes) as `duration` instead of
+        // letting the formatted clock time overwrite it under the same key
+        stops.push({...p, time: `${hh}:${m.toString().padStart(2,'0')} ${ampm}`, duration: p.time});
+        clock += p.time + 30;
+      }
+      generatedDays.push(stops);
+    }
+
+    currentDayView = 1;
+    renderItinerary();
+    showScreen('itinerary');
+
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }, 650);
+}
+
+function renderItinerary(){
+  const sub = document.getElementById('itinerarySub');
+  const tabsWrap = document.getElementById('dayTabs');
+  const routeWrap = document.getElementById('routeList');
+
+  if(!generatedDays.length){
+    sub.textContent = 'Set your preferences on the Plan tab to generate this.';
+    tabsWrap.innerHTML = '';
+    routeWrap.innerHTML = '<div class="empty-state"><b>No plan yet</b>Head to the Plan tab and tell us your days, interests, and pace.</div>';
+    return;
+  }
+
+  sub.textContent = `${days} day${days>1?'s':''} · ${pace==='relaxed'?'relaxed pace':'packed pace'} · built from local tips`;
+
+  tabsWrap.innerHTML = '';
+  generatedDays.forEach((_, i)=>{
+    const btn = document.createElement('div');
+    btn.className = 'day-tab' + (currentDayView===i+1 ? ' active':'');
+    btn.textContent = 'Day '+(i+1);
+    btn.onclick = ()=>{ currentDayView = i+1; renderItinerary(); };
+    tabsWrap.appendChild(btn);
+  });
+
+  const dayStops = generatedDays[currentDayView-1];
+  routeWrap.innerHTML = '';
+  dayStops.forEach(p=>{
+    const stop = document.createElement('div');
+    stop.className = 'stop';
+    stop.innerHTML = `
+      <div class="stop-card" onclick="toggleStopCard(this)">
+        <div class="stop-card-head">
+          <div>
+            <div class="stop-time">${p.time} · ${p.duration} min</div>
+            <p class="stop-name">${p.name}</p>
+          </div>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <p class="stop-tip">${p.tip}</p>
+        <div class="tag-row">
+          <span class="tag ${p.cat}">${CATS.find(c=>c.id===p.cat).label}</span>
+          <span class="meta">${p.cost}</span>
+          <button class="upvote-btn" data-name="${p.name}" onclick="upvoteStop(event, this)">❤ <span class="vote-count">${p.votes}</span></button>
+        </div>
+        <div class="stop-more">
+          <div class="stop-more-row"><span>Best time to go</span><b>${p.best}</b></div>
+          <div class="stop-more-row"><span>Time needed</span><b>${p.duration} min</b></div>
+          <div class="stop-more-row"><span>Typical cost</span><b>${p.cost}</b></div>
+        </div>
+      </div>`;
+    routeWrap.appendChild(stop);
+  });
+}
+
+function toggleStopCard(cardEl){
+  cardEl.classList.toggle('expanded');
+}
+
+function upvoteStop(event, btnEl){
+  event.stopPropagation(); // don't also toggle the card open/closed
+  const name = btnEl.dataset.name;
+  const place = places.find(p=>p.name===name);
+  if(!place) return;
+  place.votes++;
+  // keep any already-generated day copies of this stop in sync
+  generatedDays.forEach(day=>day.forEach(s=>{ if(s.name===name) s.votes = place.votes; }));
+  btnEl.querySelector('.vote-count').textContent = place.votes;
+  btnEl.classList.add('voted');
+}
+renderItinerary();
+
+function submitTip(){
+  const name = document.getElementById('addName').value.trim();
+  const tip = document.getElementById('addTip').value.trim();
+  const cost = document.getElementById('addCost').value.trim() || 'Not specified';
+  if(!name || !tip){
+    showToast('Add a name and a tip first');
+    return;
+  }
+  places.push({name, cat:selectedAddCat, tip, cost, time:45, votes:1, best:'Anytime', lat:9.9650+(Math.random()-0.5)*0.01, lng:76.2420+(Math.random()-0.5)*0.01});
+  document.getElementById('tipCount').textContent = places.length;
+  document.getElementById('addName').value = '';
+  document.getElementById('addTip').value = '';
+  document.getElementById('addCost').value = '';
+  showToast('Added — thanks for the local knowledge');
+  showScreen('plan');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---- MAP + DIRECTIONS ---- */
+let map, markersLayer, routeLayer;
+
+function ensureMap(){
+  if(map) return;
+  map = L.map('mapView', {zoomControl:false, attributionControl:true}).setView([9.9658,76.2421], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors',
+    maxZoom:19
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  routeLayer = L.layerGroup().addTo(map);
+}
+
+function numberedIcon(n){
+  return L.divIcon({
+    className:'',
+    html:`<div style="background:#1B4B43;color:#FBF8F0;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;border:2px solid #FBF8F0;box-shadow:0 2px 6px rgba(0,0,0,.3);">${n}</div>`,
+    iconSize:[24,24],
+    iconAnchor:[12,12]
+  });
+}
+
+async function renderMap(){
+  ensureMap();
+  map.invalidateSize();
+  markersLayer.clearLayers();
+  routeLayer.clearLayers();
+
+  const sub = document.getElementById('mapSub');
+  const summary = document.getElementById('routeSummary');
+  const orderList = document.getElementById('stopOrderList');
+  const btn = document.getElementById('directionsBtn');
+
+  if(!generatedDays.length){
+    sub.textContent = 'Generate a plan first to see the route.';
+    summary.innerHTML = '';
+    orderList.innerHTML = '<div class="empty-state"><b>No route yet</b>Build your days on the Plan tab first.</div>';
+    btn.style.opacity = '0.5';
+    btn.onclick = null;
+    return;
+  }
+
+  const dayStops = generatedDays[currentDayView-1];
+  sub.textContent = `Day ${currentDayView} · ${dayStops.length} stops in order`;
+  btn.style.opacity = '1';
+
+  const latlngs = dayStops.map(p=>[p.lat,p.lng]);
+  const stopMarkers = dayStops.map((p,i)=>
+    L.marker([p.lat,p.lng], {icon:numberedIcon(i+1)})
+      .bindPopup(`<b>${p.name}</b><br>${p.time}`)
+      .addTo(markersLayer)
+  );
+  map.fitBounds(latlngs, {padding:[30,30]});
+
+  orderList.innerHTML = '';
+  dayStops.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'stop-order-item';
+    row.innerHTML = `<div class="stop-order-num">${i+1}</div><div><b>${p.name}</b><br><span class="meta">${p.time}</span></div>`;
+    row.onclick = ()=>{
+      document.querySelectorAll('.stop-order-item').forEach(el=>el.classList.remove('active'));
+      row.classList.add('active');
+      map.flyTo([p.lat,p.lng], 16, {duration:0.6});
+      stopMarkers[i].openPopup();
+    };
+    orderList.appendChild(row);
+  });
+
+  summary.innerHTML = `<span>Calculating route…</span>`;
+
+  try{
+    const coordStr = dayStops.map(p=>`${p.lng},${p.lat}`).join(';');
+    const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`);
+    const data = await res.json();
+    if(data.routes && data.routes[0]){
+      const route = data.routes[0];
+      const coords = route.geometry.coordinates.map(c=>[c[1],c[0]]);
+      L.polyline(coords, {color:'#E2992F', weight:4, opacity:0.9, dashArray:'1,8', lineCap:'round'}).addTo(routeLayer);
+      const km = (route.distance/1000).toFixed(1);
+      const mins = Math.round(route.duration/60);
+      summary.innerHTML = `<span>Total travel: <b>${km} km</b></span><span>~<b>${mins} min</b> on the road</span>`;
+    } else {
+      summary.innerHTML = `<span>Route preview unavailable — stops still shown in order</span>`;
+    }
+  } catch(e){
+    summary.innerHTML = `<span>Route preview unavailable — stops still shown in order</span>`;
+  }
+
+  btn.onclick = ()=>openGoogleMaps(dayStops);
+}
+
+function openGoogleMaps(dayStops){
+  const stops = dayStops || (generatedDays[currentDayView-1] || []);
+  if(!stops.length) return;
+  const origin = `${stops[0].lat},${stops[0].lng}`;
+  const destination = `${stops[stops.length-1].lat},${stops[stops.length-1].lng}`;
+  const waypoints = stops.slice(1,-1).map(p=>`${p.lat},${p.lng}`).join('|');
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+  if(waypoints) url += `&waypoints=${waypoints}`;
+  window.open(url, '_blank');
+}
+
+/* PWA installability requires a manifest + a registered service worker
+   with a fetch handler — this only works when the page is served over
+   https:// (or http://localhost), not opened as a local file:// path. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
